@@ -194,12 +194,67 @@ def _extract_tables_from_docling(doc_result) -> list[dict]:
     return all_tables
 
 
-def parse_pdf(pdf_path: Path | str) -> ParseResult:
-    # Initial text density detection and routing
+def parse_pdf(pdf_path: str | Path, render_dir: Optional[Path] = None) -> ParseResult:
     pdf_path = Path(pdf_path)
     if not pdf_path.exists():
         raise FileNotFoundError(f"PDF not found: {pdf_path}")
-    doc = fitz.open(pdf_path)
-    page_count = len(doc)
-    doc.close()
-    return ParseResult(source_file=pdf_path.name, page_count=page_count, pipeline_used="native", full_markdown="")
+    
+    if render_dir is None:
+        render_dir = pdf_path.parent / ".renders"
+    
+    logger.info(f"Parsing {pdf_path.name}...")
+    
+    scanned_flags = _detect_scanned_pages(pdf_path)
+    has_scanned = any(scanned_flags)
+    has_native = any(not s for s in scanned_flags)
+    
+    if has_scanned and has_native:
+        pipeline = "hybrid"
+    elif has_scanned:
+        pipeline = "ocr"
+    else:
+        pipeline = "native"
+    
+    logger.info(f"Pipeline: {pipeline} ({sum(scanned_flags)} scanned / {len(scanned_flags) - sum(scanned_flags)} native pages)")
+    
+    from docling.document_converter import DocumentConverter
+    
+    converter = DocumentConverter()
+    result = converter.convert(str(pdf_path))
+    
+    full_markdown = result.document.export_to_markdown()
+    all_tables = _extract_tables_from_docling(result)
+    
+    pages = []
+    all_cropped_tables = []
+    
+    for i, is_scanned in enumerate(scanned_flags):
+        image_path = None
+        text_density = _calculate_text_density(pdf_path, i)
+        
+        if is_scanned:
+            png_path = _render_page_to_png(pdf_path, i, render_dir)
+            png_path = _adaptive_resize(png_path)
+            image_path = str(png_path)
+            
+            cropped_paths = _crop_table_regions(pdf_path, i, result, render_dir)
+            all_cropped_tables.extend(cropped_paths)
+            
+        pages.append(PageInfo(
+            page_number=i + 1,
+            is_scanned=is_scanned,
+            text="",
+            image_path=image_path,
+            text_density=text_density,
+        ))
+    
+    return ParseResult(
+        source_file=pdf_path.name,
+        page_count=len(scanned_flags),
+        pages=pages,
+        has_scanned_pages=has_scanned,
+        full_markdown=full_markdown,
+        tables=all_tables,
+        pipeline_used=pipeline,
+        cropped_table_images=all_cropped_tables,
+    )
