@@ -126,9 +126,3 @@ def analyze_scanned_pages(
                 logger.error(f"A page generated an exception: {exc}")
 
     return results
-def analyze_scanned_pages(scanned_images: list[str], model: str = "qwen2.5vl:7b", text_densities: dict | None = None) -> dict[int, str]:
-    results = {}
-    for img in scanned_images:
-        p_num = int(Path(img).stem.split('_')[-1])
-        results[p_num] = analyze_page_image(img, model=model)
-    return results
