@@ -89,3 +89,139 @@ Modeli bellek üzerinde tutup, API üzerinden sorgulamak ve özellikle "JSON-Sch
 | **MLX (Apple)** | Python paketi (Pip) | Yok / Çok Deneysel | Mükemmel (Native) | Yok | Apple tarafından geliştirildiği için M-Serisinde çok hızlıdır, ancak Structured Output desteği eksiktir. | ❌ Elendi |
 
 ---
+
+## 🏗️ Seçilen Mimari
+
+Pipeline (Veri Boru Hattı) baştan sona veri sızıntısı olmadan yerel cihazda çalışacak şekilde tasarlanmıştır.
+
+```text
+PDF Input (Kullanıcı Tarafından Sağlanan Belge)
+  │
+  ├─> [Adım 1] PyMuPDF ile Hızlı Tarama: 
+  │      Belgede metin katmanı (Text Layer) var mı? (Native vs Scanned tespiti)
+  │
+  ├─> [Adım 2A] Eğer Native ise (Dijital olarak oluşturulmuş):
+  │      └─> Docling CPU/MPS üzerinde çalışır
+  │          -> Gelişmiş Layout Analizi ve Tablo Çıkarımı
+  │          -> Çıktı: Temiz Markdown veya DocTags formatı
+  │
+  ├─> [Adım 2B] Eğer Scanned ise (Taranmış görsel):
+  │      └─> Docling + ocrmac OCR entegrasyonu devreye girer
+  │          -> Görüntülerden metin çıkarılır (macOS Vision Framework)
+  │          -> Sayfa PNG'leri oluşturularak Qwen3-VL'ye multimodal girdi olarak hazırlanır (VLM Görsel Anlama).
+  │
+  ├─> [Adım 3] İçerik Birleştirme:
+  │      Docling'den gelen yapısal Markdown metni ve (gerekiyorsa) sayfa görselleri LLM için tek bir prompt haline getirilir.
+  │
+  ├─> [Adım 4] Qwen3-VL 8B + Ollama Çıkarımı:
+  │      Ollama'nın "Structured Outputs" yeteneği sayesinde Qwen3-VL modeli, metni serbest bırakmak yerine zorunlu bir JSON-Schema'ya uydurarak çıktı üretmeye zorlanır (Grammar-constrained decoding).
+  │
+  └─> [Adım 5] Pydantic Doğrulama:
+         Ollama'dan dönen JSON, uygulamanın Pydantic modellerinden geçirilir. Tip doğrulamaları yapılır.
+         -> Nihai Sonuç: Standart, doğrulanmış JSON dosyası.
+```
+
+**Mimari Rasyonel:**
+Qwen3-VL gibi güçlü modeller PDF'leri doğrudan resim olarak alıp işleyebilir ancak, *Docling* ile ön ayrıştırma yapmak token tüketimini optimize eder, tabloların yapısını korur ve VLM'nin (Vision Language Model) halüsinasyon görme ihtimalini dramatik şekilde azaltır.
+
+---
+
+## 📋 Standart JSON Şeması
+
+Tüm belge tiplerini tek bir genel çatı altında (Polimorfik) toplayabilmek için aşağıdaki Pydantic V2 yapısı tasarlanmıştır.
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DocumentAnalysisResult",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "file_name": { "type": "string" },
+        "page_count": { "type": "integer" },
+        "processing_time_seconds": { "type": "number" },
+        "document_type": {
+          "type": "string",
+          "enum": ["INVOICE", "CONTRACT", "REPORT", "FORM", "OTHER"],
+          "description": "Otomatik tespit edilen belge kategorisi"
+        },
+        "confidence_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Modelin veriye duyduğu güven (0-1 arası)"
+        }
+      },
+      "required": ["file_name", "page_count", "document_type", "confidence_score"]
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": { "type": "string", "description": "Örn: sirket_adi, toplam_tutar" },
+          "value": { "type": ["string", "number", "boolean", "null"] },
+          "type": { "type": "string", "enum": ["string", "date", "currency", "number"] }
+        },
+        "required": ["key", "value", "type"]
+      },
+      "description": "Belgeden çıkarılan anahtar-değer çiftleri"
+    },
+    "tables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "table_title": { "type": "string" },
+          "columns": { "type": "array", "items": { "type": "string" } },
+          "rows": {
+            "type": "array",
+            "items": { "type": "object", "additionalProperties": true }
+          }
+        }
+      },
+      "description": "Belgedeki yapısal tablolar ve satırları"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Belgenin 1-2 cümlelik kısa özeti"
+    }
+  },
+  "required": ["metadata", "entities", "summary"]
+}
+```
+
+### Örnek Çıktı (Fatura Analizi)
+
+```json
+{
+  "metadata": {
+    "file_name": "fatura_ornek_01.pdf",
+    "page_count": 1,
+    "processing_time_seconds": 24.5,
+    "document_type": "INVOICE",
+    "confidence_score": 0.98
+  },
+  "entities": [
+    { "key": "fatura_no", "value": "INV-2026-98765", "type": "string" },
+    { "key": "fatura_tarihi", "value": "2026-07-25", "type": "date" },
+    { "key": "satici_unvan", "value": "Acme Teknoloji A.Ş.", "type": "string" },
+    { "key": "toplam_tutar", "value": 14500.50, "type": "currency" }
+  ],
+  "tables": [
+    {
+      "table_title": "Hizmet ve Ürün Kalemleri",
+      "columns": ["Sıra", "Ürün", "Miktar", "Birim Fiyat", "Toplam"],
+      "rows": [
+        { "Sıra": "1", "Ürün": "Sunucu Bakım", "Miktar": "2", "Birim Fiyat": "5000", "Toplam": "10000" },
+        { "Sıra": "2", "Ürün": "Lisans Yenileme", "Miktar": "1", "Birim Fiyat": "4500.50", "Toplam": "4500.50" }
+      ]
+    }
+  ],
+  "summary": "Acme Teknoloji A.Ş. tarafından kesilmiş, 14,500.50 TL değerinde sunucu bakım ve lisans yenileme faturası."
+}
+```
+
+---
