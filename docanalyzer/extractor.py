@@ -214,3 +214,211 @@ def _call_ollama_chat_blocking(model: str, prompt: str, timeout: float = 600.0) 
     return data.get("message", {}).get("content", "")
 
 
+def extract_document_chunked_streaming(
+    source_file: str,
+    page_count: int,
+    pipeline_used: str,
+    markdown_content: str,
+    vlm_results: dict[int, str] | None = None,
+    fast_model: str = "phi4-mini",
+    deep_model: str = "qwen2.5:latest",
+    ocr_engine: str | None = None,
+    on_token: callable | None = None,
+    on_phase_start: callable | None = None,
+    on_phase_end: callable | None = None,
+) -> DocumentAnalysis:
+    vlm_section = _build_vlm_section(vlm_results)
+    total_start = time.time()
+    
+    phase1_label = f"Metadata & Key-Values [{fast_model}]"
+    if on_phase_start:
+        on_phase_start(1, phase1_label)
+    
+    p1_prompt = PHASE1_PROMPT.format(
+        source_file=source_file,
+        page_count=page_count,
+        pipeline_used=pipeline_used,
+        markdown_content=markdown_content,
+        vlm_section=vlm_section,
+    )
+    
+    p1_start = time.time()
+    p1_tokens = []
+    for token in _stream_ollama_chat(fast_model, p1_prompt):
+        p1_tokens.append(token)
+        if on_token:
+            on_token(token, 1)
+    p1_raw = "".join(p1_tokens)
+    p1_duration = time.time() - p1_start
+    
+    if on_phase_end:
+        on_phase_end(1, phase1_label, p1_duration)
+    
+    phase2_label = f"Tables [{deep_model}]"
+    if on_phase_start:
+        on_phase_start(2, phase2_label)
+    
+    p2_prompt = PHASE2_PROMPT.format(markdown_content=markdown_content)
+    
+    p2_start = time.time()
+    p2_tokens = []
+    for token in _stream_ollama_chat(deep_model, p2_prompt):
+        p2_tokens.append(token)
+        if on_token:
+            on_token(token, 2)
+    p2_raw = "".join(p2_tokens)
+    p2_duration = time.time() - p2_start
+    
+    if on_phase_end:
+        on_phase_end(2, phase2_label, p2_duration)
+    
+    phase3_label = f"Entities [{deep_model}]"
+    if on_phase_start:
+        on_phase_start(3, phase3_label)
+    
+    p3_prompt = PHASE3_PROMPT.format(markdown_content=markdown_content)
+    
+    p3_start = time.time()
+    p3_tokens = []
+    for token in _stream_ollama_chat(deep_model, p3_prompt):
+        p3_tokens.append(token)
+        if on_token:
+            on_token(token, 3)
+    p3_raw = "".join(p3_tokens)
+    p3_duration = time.time() - p3_start
+    
+    if on_phase_end:
+        on_phase_end(3, phase3_label, p3_duration)
+    
+    total_duration = time.time() - total_start
+    
+    p1_json = json.loads(_clean_json_text(p1_raw))
+    p2_json = json.loads(_clean_json_text(p2_raw))
+    p3_json = json.loads(_clean_json_text(p3_raw))
+    
+    combined = {
+        "document": {
+            "source_file": source_file,
+            "page_count": page_count,
+            "document_type": p1_json.get("document_type", "other"),
+            "language": p1_json.get("language", "en"),
+            "processing": {
+                "pipeline_used": pipeline_used,
+                "model": f"{fast_model} + {deep_model}",
+                "duration_seconds": round(total_duration, 2),
+            },
+        },
+        "metadata": {
+            "title": str(p1_json.get("title")) if p1_json.get("title") else None,
+            "date": str(p1_json.get("date")) if p1_json.get("date") else None,
+            "parties": [
+                p["name"] if isinstance(p, dict) and "name" in p else str(p)
+                for p in p1_json.get("parties", [])
+            ],
+            "reference_numbers": [str(r) for r in p1_json.get("reference_numbers", [])],
+        },
+        "summary": p1_json.get("summary", ""),
+        "key_values": [
+            {
+                **kv, 
+                "value": ", ".join(kv.get("value")) if isinstance(kv.get("value"), list) else str(kv.get("value") or "")
+            }
+            for kv in p1_json.get("key_values", [])
+        ],
+        "tables": p2_json.get("tables", []),
+        "entities": p3_json.get("entities", []),
+        "raw_text_markdown": markdown_content,
+    }
+    
+    if ocr_engine:
+        combined["document"]["processing"]["ocr_engine"] = ocr_engine
+    
+    result = DocumentAnalysis.model_validate(combined)
+    logger.info(f"Chunked extraction complete in {total_duration:.1f}s (P1={p1_duration:.1f}s P2={p2_duration:.1f}s P3={p3_duration:.1f}s)")
+    return result
+
+
+def extract_document_json(
+    source_file: str,
+    page_count: int,
+    pipeline_used: str,
+    markdown_content: str,
+    vlm_results: dict[int, str] | None = None,
+    model: str = "qwen3.5",
+    ocr_engine: str | None = None,
+    max_retries: int = 3,
+) -> DocumentAnalysis:
+    vlm_section = _build_vlm_section(vlm_results)
+    schema = get_extraction_schema()
+    
+    prompt = EXTRACTION_PROMPT_TEMPLATE.format(
+        source_file=source_file,
+        page_count=page_count,
+        pipeline_used=pipeline_used,
+        markdown_content=markdown_content,
+        vlm_section=vlm_section,
+        json_schema=json.dumps(schema, indent=2),
+    )
+    
+    last_error = None
+    for attempt in range(1, max_retries + 1):
+        logger.info(f"Extraction attempt {attempt}/{max_retries} with {model}...")
+        
+        try:
+            start_time = time.time()
+            raw_content = _call_ollama_chat_blocking(model, prompt)
+            duration = time.time() - start_time
+            logger.info(f"LLM response received in {duration:.1f}s")
+            logger.info(f"RAW response length: {len(raw_content)} chars")
+            logger.debug(f"RAW response (first 500): {raw_content[:500]}")
+            
+            if not raw_content.strip():
+                last_error = "Model returned empty response"
+                logger.warning(f"Attempt {attempt} failed: {last_error}")
+                continue
+            
+            raw_text = _clean_json_text(raw_content)
+            raw_json = json.loads(raw_text)
+            
+            if "document" not in raw_json:
+                raw_json["document"] = {}
+            
+            doc_info = raw_json["document"]
+            doc_info["source_file"] = source_file
+            doc_info["page_count"] = page_count
+            
+            if "processing" not in doc_info:
+                doc_info["processing"] = {}
+            
+            proc = doc_info["processing"]
+            proc["pipeline_used"] = pipeline_used
+            proc["model"] = model
+            proc["duration_seconds"] = round(duration, 2)
+            if ocr_engine:
+                proc["ocr_engine"] = ocr_engine
+            
+            result = DocumentAnalysis.model_validate(raw_json)
+            result.raw_text_markdown = markdown_content
+            logger.info("Extraction successful — Pydantic validation passed")
+            return result
+            
+        except json.JSONDecodeError as e:
+            last_error = f"JSON parse error: {e}"
+            logger.warning(f"Attempt {attempt} failed: {last_error}")
+        except ValidationError as e:
+            last_error = f"Pydantic validation error: {e}"
+            logger.warning(f"Attempt {attempt} failed: {last_error}")
+        except httpx.HTTPStatusError as e:
+            last_error = f"Ollama API error: {e.response.status_code} - {e.response.text[:200]}"
+            logger.error(f"Attempt {attempt} failed: {last_error}")
+        except httpx.TimeoutException as e:
+            last_error = f"Ollama API timeout: {e}"
+            logger.error(f"Attempt {attempt} failed: {last_error}")
+        except Exception as e:
+            last_error = f"Unexpected error: {e}"
+            logger.error(f"Attempt {attempt} failed: {last_error}")
+            raise
+    
+    raise RuntimeError(
+        f"Extraction failed after {max_retries} attempts. Last error: {last_error}"
+    )
