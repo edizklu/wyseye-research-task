@@ -225,3 +225,65 @@ Tüm belge tiplerini tek bir genel çatı altında (Polimorfik) toplayabilmek i�
 ```
 
 ---
+
+## 🛠️ Kurulum
+
+Bu PoC'nin sorunsuz çalışabilmesi için Apple macOS işletim sistemi ve Homebrew paket yöneticisi varsayılmaktadır.
+
+1. **Ön Gereksinimlerin Kurulması:**
+   Sisteminizde `uv` (modern Python paket/proje yöneticisi) ve `ollama` kurulu olmalıdır.
+   ```bash
+   brew install ollama uv
+   ```
+
+2. **Ollama Servisinin Başlatılması:**
+   Ollama'yı arka planda bir servis olarak çalıştırmak için:
+   ```bash
+   brew services start ollama
+   # veya manuel olarak o anlık başlatmak için: ollama serve
+   ```
+
+3. **Gerekli LLM/VLM Modelinin İndirilmesi:**
+   Qwen3-VL 8B modelini bilgisayarınıza çekin. Bu işlem internet hızınıza bağlı olarak birkaç dakika sürebilir (Yaklaşık 6.1 GB).
+   ```bash
+   ollama pull qwen3-vl:8b
+   ```
+   *(Opsiyonel/Yedek): 4B modelini de indirebilirsiniz: `ollama pull qwen3-vl:4b`*
+
+4. **Python Bağımlılıklarının Yüklenmesi:**
+   Proje dizininde (bu README'nin bulunduğu klasörde) terminal açın ve bağımlılıkları sanal ortama kurun:
+   ```bash
+   uv sync
+   ```
+
+5. **Örnek Belgelerin Üretilmesi (Test İçin):**
+   Eğer elinizde PDF yoksa, test scriptini çalıştırarak proje içine örnek PDF dosyaları (native ve scanned) oluşturabilirsiniz.
+   ```bash
+   uv run python scripts/generate_samples.py
+   ```
+
+---
+
+## 🚀 Kullanım
+
+Kurulum tamamlandıktan sonra, projeyi CLI (Komut Satırı Arayüzü) üzerinden kolayca kullanabilirsiniz.
+
+```bash
+# Temel Kullanım: Tek bir belgenin analizi
+# Sonuçlar terminale (stdout) JSON formatında basılır.
+uv run docanalyze samples/native.pdf
+
+# Çıktıyı belirli bir JSON dosyasına kaydetmek
+uv run docanalyze samples/native.pdf -o output.json
+
+# Verbose (Detaylı) Mod: Çalışma sırasındaki aşamaları, Docling parse sürelerini gösterir
+uv run docanalyze samples/native.pdf -v
+
+# 16 GB bellek sınırına takılanlar için daha küçük yedek modeli (4B) kullanma
+uv run docanalyze samples/native.pdf --model qwen3-vl:4b
+
+# Sistemin beklenti içinde olduğu JSON Schema yapısını ham olarak görüntüleme
+uv run docanalyze schema
+```
+
+---
