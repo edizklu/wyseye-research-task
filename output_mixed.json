@@ -1,0 +1,155 @@
+{
+  "document": {
+    "source_file": "mixed.pdf",
+    "page_count": 3,
+    "document_type": "report",
+    "language": "en",
+    "processing": {
+      "pipeline_used": "hybrid",
+      "ocr_engine": "ocrmac",
+      "model": "qwen3.5",
+      "duration_seconds": 269.4
+    }
+  },
+  "metadata": {
+    "title": "QUARTERLY PERFORMANCE REPORT Q4 2024",
+    "date": "2025-01-20",
+    "parties": [
+      "DataVision Analytics Inc.",
+      "Sarah Chen"
+    ],
+    "reference_numbers": [
+      "RPT-Q4-2024-0089"
+    ]
+  },
+  "summary": "This report details Q4 2024 performance for DataVision Analytics, showing a total revenue of $6.48M which exceeded targets. It highlights strong growth in Asia Pacific and EMEA retention challenges.",
+  "key_values": [
+    {
+      "key": "Prepared By",
+      "value": "DataVision Analytics Inc.",
+      "confidence": null
+    },
+    {
+      "key": "Report Period",
+      "value": "Q4 2024 (October - December)",
+      "confidence": null
+    },
+    {
+      "key": "Date Issued",
+      "value": "January 20, 2025",
+      "confidence": null
+    }
+  ],
+  "tables": [
+    {
+      "caption": "Revenue by Region - Q4 2024",
+      "headers": [
+        "Region",
+        "Revenue",
+        "Growth",
+        "Target",
+        "Status"
+      ],
+      "rows": [
+        [
+          "North America",
+          "$2,450,000",
+          "+ 12.3%",
+          "$2,200,000",
+          "Exceeded"
+        ],
+        [
+          "Europe (EMEA)",
+          "$1,890,000",
+          "+8.7%",
+          "$1,950,000",
+          "Below Target"
+        ],
+        [
+          "Asia Pacific",
+          "$1,120,000",
+          "+22.1%",
+          "$1,000,000",
+          "Exceeded"
+        ],
+        [
+          "Latin America",
+          "$680,000",
+          "+15.4%",
+          "$600,000",
+          "Exceeded"
+        ],
+        [
+          "Middle East",
+          "$340,000",
+          "+5.2%",
+          "$400,000",
+          "Below Target"
+        ],
+        [
+          "Total",
+          "$6,480,000",
+          "+13.1%",
+          "$6,150,000",
+          "Exceeded"
+        ]
+      ]
+    },
+    {
+      "caption": "Key Performance Indicators",
+      "headers": [
+        "KPI",
+        "Q3 2024",
+        "Q4 2024",
+        "Change"
+      ],
+      "rows": [
+        [
+          "Customer Acquisition Cost",
+          "$142",
+          "$128",
+          "-9.9%"
+        ],
+        [
+          "Monthly Recurring Revenue",
+          "$1.82M",
+          "$2.16M",
+          "+18.7%"
+        ],
+        [
+          "Churn Rate",
+          "3.2%",
+          "2.8%",
+          "-12.5%"
+        ],
+        [
+          "Net Promoter Score",
+          "67",
+          "72",
+          "+7.5%"
+        ],
+        [
+          "Employee Satisfaction",
+          "4.1/5",
+          "4.3/5",
+          "+4.9%"
+        ]
+      ]
+    }
+  ],
+  "entities": [
+    {
+      "type": "organization",
+      "value": "DataVision Analytics Inc."
+    },
+    {
+      "type": "person",
+      "value": "Sarah Chen"
+    },
+    {
+      "type": "email",
+      "value": "sarah.chen@datavision.com"
+    }
+  ],
+  "raw_text_markdown": "## QUARTERLY PERFORMANCE REPORT\n\nPrepared by: DataVision Analytics Inc.\n\nReport Period: Q4 2024 (October - December)\n\nDate: January 20, 2025\n\nReference: RPT-Q4-2024-0089\n\nConfidential - For internal use only. This report contains proprietary performance metrics and strategic recommendations for Q1 2025.\n\n## Revenue by Region - Q4 2024\n\n| Region        | Revenue    | Growth   | Target     | Status       |\n|---------------|------------|----------|------------|--------------|\n| North America | $2,450,000 | + 12.3%  | $2,200,000 | Exceeded     |\n| Europe (EMEA) | $1,890,000 | +8.7%    | $1,950,000 | Below Target |\n| Asia Pacific  | $1,120,000 | +22.1%   | $1,000,000 | Exceeded     |\n| Latin America | $680,000   | +15.4%   | $600,000   | Exceeded     |\n| Middle East   | $340,000   | +5.2%    | $400,000   | Below Target |\n| Total         | $6,480,000 | +13.1%   | $6,150,000 | Exceeded     |\n\n## Key Performance Indicators\n\n| KPI                       | Q3 2024   | Q4 2024   | Change   |\n|---------------------------|-----------|-----------|----------|\n| Customer Acquisition Cost | $142      | $128      | -9.9%    |\n| Monthly Recurring Revenue | $1.82M    | $2.16M    | +18.7%   |\n| Churn Rate                | 3.2%      | 2.8%      | -12.5%   |\n| Net Promoter Score        | 67        | 72        | +7.5%    |\n| Employee Satisfaction     | 4.1/5     | 4.3/5     | +4.9%    |\n\n## Executive Summary &amp; Recommendations\n\nQ4 2024 demonstrated strong overall performance with total revenue of $6.48M, exceeding our target of $6.15M by 5.4%. The Asia Pacific region showed the strongest growth at 22.1%, driven primarily by expansion in the Southeast Asian markets. Customer acquisition costs decreased by 9.9%, reflecting improved marketing efficiency.\n\n## Key Recommendations for Q1 2025:\n\n1. Increase investment in Asia Pacific region by 15% to capitalize on growth momentum\n2. Launch targeted retention program for EMEA to address below-target performance\n3. Expand the partnership program that drove North American success\n4. Implement new pricing tier for mid-market segment based on Q4 feedback data\n5. Hire 3 additional sales representatives for Latin America\n\n## Prepared by:\n\nSarah Chen, Director of Analytics DataVision Analytics Inc. sarah.chen@datavision.com"
+}

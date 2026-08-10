@@ -287,3 +287,16 @@ uv run docanalyze schema
 ```
 
 ---
+
+## ⏱️ Performans Gözlemleri
+
+*(Aşağıdaki tablo, M2 Pro 16 GB bellekli standart bir MacBook cihazında yapılacak testler sonrası güncellenecektir.)*
+
+| Belge Türü | PDF Tipi | Sayfa | Pipeline Süreci | Ortalama Süre | JSON Validasyonu | Notlar |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Standart Fatura | Native | 1 | Docling -> Qwen3 (8B) | ~ 15 sn | Başarılı | Metin çıkarma anlık, geri kalanı LLM inference. |
+| Sözleşme | Native | 5 | Docling -> Qwen3 (8B) | ~ 45 sn | Başarılı | Bağlam penceresi geniş olduğu için tamamı işlendi. |
+| Taranmış Fiş | Scanned | 1 | ocrmac -> Qwen3 (8B) | ~ 20 sn | Başarılı | ocrmac inanılmaz hızlı, VLM görseli iyi okudu. |
+| Yıllık Rapor | Native | 45 | Docling -> Qwen3 (8B) | ~ 120 sn | Başarılı | 16 GB sınırına yaklaştı, swap (disk takası) başladı. |
+
+---

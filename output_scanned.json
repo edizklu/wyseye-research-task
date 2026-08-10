@@ -1,0 +1,94 @@
+{
+  "document": {
+    "source_file": "scanned.pdf",
+    "page_count": 2,
+    "document_type": "invoice",
+    "language": "en",
+    "processing": {
+      "pipeline_used": "ocr",
+      "ocr_engine": "ocrmac",
+      "model": "qwen3.5",
+      "duration_seconds": 245.77
+    }
+  },
+  "metadata": {
+    "title": null,
+    "date": null,
+    "parties": [],
+    "reference_numbers": []
+  },
+  "summary": "An invoice from ACME CORPORATION addressed to Global Tech Solutions Ltd. for IT services including cloud setup, API development, and security audits.",
+  "key_values": [
+    {
+      "key": "Bill To",
+      "value": "Global Tech Solutions Ltd.",
+      "confidence": 1.0
+    },
+    {
+      "key": "Attn Name",
+      "value": "John Smith",
+      "confidence": 1.0
+    },
+    {
+      "key": "Billing Address Line 1",
+      "value": "789 Enterprise Road, Building C San Francisco, CA 94102",
+      "confidence": 1.0
+    },
+    {
+      "key": "Tax ID (Bill To)",
+      "value": "US-87-6543210",
+      "confidence": 0.8
+    }
+  ],
+  "tables": [
+    {
+      "caption": "Items & Services",
+      "headers": [
+        "#",
+        "Description",
+        "Qty",
+        "Unit Price",
+        "Amount"
+      ],
+      "rows": [
+        [
+          "1",
+          "Cloud Infrastructure Setup (AWS/GCP configuration)",
+          "",
+          "$4,500.00",
+          "$4,500.00"
+        ],
+        [
+          "2",
+          "Custom API Development (REST + GraphQL endpoints)",
+          "80 hrs",
+          "$150.00/hr",
+          "$12,000.00"
+        ],
+        [
+          "3",
+          "Database Migration Service (PostgreSQL to Cloud SQL)",
+          "",
+          "$3,200.00",
+          "$3,200.00"
+        ],
+        [
+          "4",
+          "Security Audit & Penetration Testing (OWASP Top 10)",
+          "1",
+          "$2,800.00",
+          "$2,800.00"
+        ],
+        [
+          "5",
+          "Technical Documentation & Training (2 sessions)",
+          "",
+          "$1,500.00",
+          "$1,500.00"
+        ]
+      ]
+    }
+  ],
+  "entities": [],
+  "raw_text_markdown": "## Bill To:\n\n## Global Tech Solutions Ltd.\n\nAttn: John Smith, Procurement Manager 789 Enterprise Road, Building C San Francisco, CA 94102 Tax ID: US-87-6543210\n\n## Items &amp; Services\n\n|   # | Description                                          | Qty    | Unit Price   | Amount     |\n|-----|------------------------------------------------------|--------|--------------|------------|\n|   1 | Cloud Infrastructure Setup (AWS/GCP configuration)   | 1      | $4,500.00    | $4,500.00  |\n|   2 | Custom API Development (REST + GraphQL endpoints)    | 80 hrs | $150.00/hr   | $12,000.00 |\n|   3 | Database Migration Service (PostgreSQL to Cloud SQL) |        | $3,200.00    | $3,200.00  |\n|   4 | Security Audit & Penetration Testing (OWASP Top 10)  | 1      | $2,800.00    | $2,800.00  |\n|   5 | Technical Documentation & Training (2 sessions)      |        | $1,500.00    | $1,500.00  |\n\nSubtotal:\n\nTax (8.5%):\n\nDiscount (5%):\n\nTotal Due:\n\n$24,000.00\n\n$2,040.00\n\n-$1,200.00\n\n$24,840.00\n\n## ACME CORPORATION\n\n123 Business Avenue, Suite 456\n\nNew York, NY 10001 | Tel: (555) 123-4567\n\nEmail: billing@acmecorp.com | Web: www.acmecorp.com\n\nInvoice Number: INV-2025-00742\n\nInvoice Date:\n\nJanuary 15, 2025\n\nDue Date: February 14, 2025\n\nPayment Terms: Net 30\n\nPurchase Order: PO-2025-1234\n\n## INVOICE\n\n## Payment Information\n\nBank: First National Bank of Commerce\n\nAccount: 9876-5432-1098\n\nRouting: 021000021\n\nSWIFT: FNBCUS33\n\nThank you for your business! Please make payment by the due date. Late payments are subject to a 1.5% monthly interest charge. For questions, contact billing@acmecorp.com."
+}
