@@ -300,3 +300,16 @@ uv run docanalyze schema
 | Yıllık Rapor | Native | 45 | Docling -> Qwen3 (8B) | ~ 120 sn | Başarılı | 16 GB sınırına yaklaştı, swap (disk takası) başladı. |
 
 ---
+
+## 💻 Donanım Önerileri
+
+Farklı ortam ve ölçeklerde bu çözümü konumlandırmak için donanım tavsiyeleri:
+
+| Senaryo | Hedef RAM/VRAM | Önerilen GPU / Çip | Runtime | Notlar |
+| :--- | :--- | :--- | :--- | :--- |
+| **PoC / Demo** | 16 GB | Apple M1/M2/M3/M4 | Ollama | 8B model limitli RAM yüzünden swap yaparsa yavaşlar ama stabil çalışır. |
+| **Geliştirme (Lokal)** | 32 GB | Apple M-series (Pro/Max)| Ollama | Bellek swap'i yaşanmaz, oldukça hızlı ve rahat bir geliştirme deneyimi. |
+| **Üretim (Küçük Ölçek)**| 64 GB | Apple M-Series Ultra veya NVIDIA T4 | Ollama / vLLM | Asenkron istekler desteklenir. Batch işlemleri için ideal başlangıç. |
+| **Üretim (Orta/Büyük)** | 128+ GB | NVIDIA A100 / H100 | vLLM | Yüksek throughput (aynı anda onlarca kullanıcı ve belge işleme), OpenAI API uyumlu deployment. |
+
+---
