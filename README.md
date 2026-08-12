@@ -313,3 +313,18 @@ Farklı ortam ve ölçeklerde bu çözümü konumlandırmak için donanım tavsi
 | **Üretim (Orta/Büyük)** | 128+ GB | NVIDIA A100 / H100 | vLLM | Yüksek throughput (aynı anda onlarca kullanıcı ve belge işleme), OpenAI API uyumlu deployment. |
 
 ---
+
+
+## 💰 Maliyet Analizi (Cloud vs On-Premise TCO)
+
+Günde 1.000 doküman işleme senaryosu baz alınarak yapılan maliyet tahmini:
+
+| Kalem | Bulut (Azure/OpenAI) | On-Premise (Yerel) |
+| :--- | :--- | :--- |
+| **Donanım Maliyeti** | $0 | ~$2.000 (tek seferlik Mac/PC) |
+| **Aylık API Maliyeti** | ~$3.000–$5.000 | $0 |
+| **1 Yıllık Toplam Maliyet (TCO)** | ~$36.000–$60.000 | ~$2.000 |
+| **Veri Gizliliği & Güvenlik** | Üçüncü taraf riski | %100 Tam kontrol (Yerel) |
+| **Yatırım Geri Dönüşü (ROI)** | — | İlk ay içinde amorti |
+
+*Not: On-premise yatırımın donanım maliyeti genellikle sistemin devreye alındığı ilk ay içinde kendini amorti etmektedir.*
