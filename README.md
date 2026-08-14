@@ -314,17 +314,51 @@ Farklı ortam ve ölçeklerde bu çözümü konumlandırmak için donanım tavsi
 
 ---
 
+## ⚠️ Sınırlamalar
 
-## 💰 Maliyet Analizi (Cloud vs On-Premise TCO)
+Bu çözüm %100 yerel ve gizlilik odaklı olduğu için bazı doğal kısıtlamalara sahiptir:
 
-Günde 1.000 doküman işleme senaryosu baz alınarak yapılan maliyet tahmini:
+1. **Donanım Limitleri (Apple Silicon 16GB):** Qwen3-VL 8B modeli bellekte yaklaşık 6.1 GB kaplar. macOS'un kendi ihtiyacı ve Docling/PyMuPDF işlemleri birleşince, sistem belleği dolabilir. Bu durumda cihaz disk takasına (Swap) gireceği için sayfa başına analiz süresi 30-90 saniyelere çıkabilir.
+2. **Context Window (Bağlam Penceresi):** Model 256K desteklese de, RAM kısıtları nedeniyle >50 sayfalık, çok yoğun metin içeren devasa sözleşmelerin tek seferde analizi belleğe sığmayabilir. Bu durumda belge parçalanarak (Chunking) işlenmelidir.
+3. **İlk Çalıştırma Gecikmesi:** Docling, ilk kullanıldığında layout ve tablo modellerini HuggingFace üzerinden indirir (Yaklaşık 500 MB). İlk analiz yavaş olacaktır.
+4. **OCR Kalitesi:** Düşük çözünürlüklü (<150 DPI) veya kötü aydınlatmalı taranmış belgelerde OCR kalitesi düşebilir.
+5. **İşletim Sistemi Bağımlılığı:** Seçilen OCR motoru `ocrmac` yalnızca macOS ortamında (Vision framework) çalışır. Proje Linux tabanlı bir sunucuya taşınırsa, OCR motorunun EasyOCR veya Tesseract ile değiştirilmesi gerekir.
 
-| Kalem | Bulut (Azure/OpenAI) | On-Premise (Yerel) |
+---
+
+## 🛣️ İyileştirme Yol Haritası (Roadmap)
+
+Gelecekteki fazlar için planlanan mimari iyileştirmeler:
+
+1. **Türkçe OCR Desteğinin Mükemmelleştirilmesi:** Qwen3-VL doğası gereği Türkçe'yi iyi anlar. Linux sunucu geçişinde OCR adımı için Türkçe optimize edilmiş PaddleOCR veya EasyOCR modelleri entegre edilecektir.
+2. **Toplu (Batch) İşleme ve Otomasyon:** Belirli bir klasörü izleyen (Watchdog) veya çoklu belgeleri sıraya sokan (Queue) asenkron bir mekanizma, paralel işleme ve terminalde ilerleme çubuğu (Progress bar) eklenecektir.
+3. **vLLM ile Ölçekleme:** Üretim ortamında uygulamanın NVIDIA GPU'lu bir sunucuya (örn: Ubuntu + A100) taşınması. Model sunucusunun Ollama yerine `vLLM` yapılarak paralel istek (throughput) limitlerinin artırılması.
+4. **Belge Tipi Spesifik Şemalar:** `document_type` değişkenine göre dinamik JSON şeması seçimi. (Örn: Eğer Fatura ise sadece satıcı, alıcı, KDV alanlarını iste; Sözleşme ise taraflar ve bitiş tarihlerini iste).
+5. **Web Arayüzü Entegrasyonu:** Son kullanıcıların komut satırı yerine belgeleri sürükle-bırak yapabileceği, sonuçları görsel olarak görebileceği Streamlit veya Gradio tabanlı basit bir lokal web UI.
+6. **Vektör Veritabanı ve Semantik Arama:** İşlenen belgelerin metinleri ve meta verileri ChromaDB veya Qdrant gibi yerel bir vektör DB'ye kaydedilerek belgeler arasında "Doğal dille arama (RAG)" yeteneğinin kazanılması.
+7. **Fine-tuning (İsteğe Bağlı):** Belirli kurumsal belge formatlarına (örneğin firmaya özel kompleks gümrük beyannameleri) sıfır hata ile yanıt verebilmek için LoRA (Low-Rank Adaptation) ile modelin fine-tune edilmesi.
+
+---
+
+## ⚖️ Lisanslar
+
+Kullanılan tüm araçlar kurum içi ticari PoC (ve sonrası ürünleşme) süreçleri için uygun açık kaynak lisanslarına sahiptir:
+
+| Bileşen / Kütüphane | Lisans Türü | Hukuki Risk |
 | :--- | :--- | :--- |
-| **Donanım Maliyeti** | $0 | ~$2.000 (tek seferlik Mac/PC) |
-| **Aylık API Maliyeti** | ~$3.000–$5.000 | $0 |
-| **1 Yıllık Toplam Maliyet (TCO)** | ~$36.000–$60.000 | ~$2.000 |
-| **Veri Gizliliği & Güvenlik** | Üçüncü taraf riski | %100 Tam kontrol (Yerel) |
-| **Yatırım Geri Dönüşü (ROI)** | — | İlk ay içinde amorti |
+| **Docling** | Apache 2.0 | Yok (Ticari kullanıma serbest) |
+| **Qwen3-VL Modelleri** | Apache 2.0 | Yok (Ticari kullanıma serbest) |
+| **Ollama** | MIT | Yok (Ticari kullanıma serbest) |
+| **PyMuPDF** | AGPL | **Dikkat:** Sadece örnek veri üretme veya kütüphane bağımlılığı olmaksızın kullanılabilir. Ana işlem motoru olarak Docling kullanıldığından AGPL kısıtı projeyi enfekte etmez. |
+| **Pydantic** | MIT | Yok |
+| **Typer** (CLI) | MIT | Yok |
 
-*Not: On-premise yatırımın donanım maliyeti genellikle sistemin devreye alındığı ilk ay içinde kendini amorti etmektedir.*
+---
+
+## 🔗 Referanslar
+
+- [Docling GitHub Reposu](https://github.com/DS4SD/docling)
+- [Ollama - Structured Outputs Dokümantasyonu](https://ollama.com/blog/structured-outputs)
+- [Qwen3-VL 8B Model Kartı (HuggingFace)](https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct)
+- [Pydantic V2 Dokümantasyonu](https://docs.pydantic.dev/)
+- [Apple Vision Framework (ocrmac altyapısı)](https://developer.apple.com/documentation/vision/recognizing_text_in_images)
